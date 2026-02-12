@@ -61,9 +61,19 @@ export default function CompanyGeneratorPage() {
 
             // Send email
             try {
-              const { sendCertificateEmailAction } = await import('@/app/actions/email')
-              await sendCertificateEmailAction(dataUrl, issueType || "Company Issue", new Date().toISOString(), companyName)
-              console.log('Certificate email sent successfully')
+              await fetch('/api/email', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  certificateDataUrl: dataUrl,
+                  issueType: issueType || "Company Issue",
+                  capturedAt: new Date().toISOString(),
+                  locationText: companyName
+                })
+              });
+              console.log('Certificate email sent successfully');
             } catch (error) {
               console.error('Failed to send certificate email:', error)
             }

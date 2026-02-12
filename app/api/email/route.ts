@@ -1,15 +1,21 @@
-'use server';
 
+import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/mail';
 
-export async function sendCertificateEmailAction(
-    certificateDataUrl: string,
-    issueType: string,
-    capturedAt: string,
-    locationText?: string
-) {
+export const maxDuration = 60; // Allow 60 seconds max
+export const dynamic = 'force-dynamic';
+
+export async function POST(request: NextRequest) {
     try {
-        const base64Data = certificateDataUrl.replace(/^data:image\/png;base64,/, '');
+        const body = await request.json();
+        const { certificateDataUrl, issueType, capturedAt, locationText } = body;
+
+        if (!certificateDataUrl) {
+            return NextResponse.json({ error: 'Missing certificate data' }, { status: 400 });
+        }
+
+        // Handle both png and jpeg data URLs
+        const base64Data = certificateDataUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const loc = locationText || '[Location]';
         const date = new Date(capturedAt).toLocaleDateString('en-IN');
@@ -45,15 +51,20 @@ Yours faithfully,
             text: emailBody,
             attachments: [
                 {
-                    filename: `certificate-${issueType.toLowerCase().replace(/\s+/g, '-')}.png`,
+                    filename: `certificate-${(issueType || 'issue').toLowerCase().replace(/\s+/g, '-')}.jpg`,
                     content: buffer,
                 },
             ],
         });
 
-        return result;
+        if (result.success) {
+            return NextResponse.json({ success: true, messageId: result.messageId });
+        } else {
+            console.error('Email send failed:', result.error);
+            return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+        }
     } catch (error) {
-        console.error('Error in sendCertificateEmailAction:', error);
-        return { success: false, error };
+        console.error('Error in email API route:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

@@ -11,6 +11,15 @@ const transport = nodemailer.createTransport({
   }
 });
 
+// Verify connection configuration
+try {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("WARNING: Email environment variables (EMAIL_USER, EMAIL_PASS) are missing!");
+  }
+} catch (e) {
+  // ignore
+}
+
 export async function sendEmail({
   to,
   subject,

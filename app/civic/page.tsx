@@ -100,10 +100,19 @@ export default function CivicHomePage() {
 
     // Send email with certificate
     try {
-      // Import dynamically to avoid server-side issues if any
-      const { sendCertificateEmailAction } = await import('@/app/actions/email')
-      await sendCertificateEmailAction(dataUrl, certData.issueType, certData.capturedAt, certData.locationText)
-      console.log('Certificate email sent successfully')
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          certificateDataUrl: dataUrl,
+          issueType: certData.issueType,
+          capturedAt: certData.capturedAt,
+          locationText: certData.locationText
+        })
+      });
+      console.log('Certificate email sent successfully');
     } catch (error) {
       console.error('Failed to send certificate email:', error)
     }
