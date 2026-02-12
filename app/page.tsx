@@ -36,7 +36,7 @@ function generateUUID(): string {
     return crypto.randomUUID();
   }
   // Fallback for older browsers
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -103,15 +103,15 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!issueImage) return
-    ;(async () => {
-      setIsLocLoading(true)
-      const meta = await getLocationFromImageOrDevice(issueImage)
-      if (meta?.coords) setCoords(meta.coords)
-      // Only set date from image if user hasn't manually set one
-      if (meta?.date && !userSetTime) setDateTime(meta.date)
-      if (meta?.pretty) setLocText(meta.pretty)
-      setIsLocLoading(false)
-    })()
+      ; (async () => {
+        setIsLocLoading(true)
+        const meta = await getLocationFromImageOrDevice(issueImage)
+        if (meta?.coords) setCoords(meta.coords)
+        // Only set date from image if user hasn't manually set one
+        if (meta?.date && !userSetTime) setDateTime(meta.date)
+        if (meta?.pretty) setLocText(meta.pretty)
+        setIsLocLoading(false)
+      })()
   }, [issueImage, userSetTime])
 
   // Fix hydration error: set local date/time only on client
@@ -137,7 +137,7 @@ export default function HomePage() {
 
   const handleGenerate = async () => {
     if (!issueImage) return;
-    
+
     // Debug logging for issue image
     console.log('Generating certificate with issue image:', {
       name: issueImage.name,
@@ -146,7 +146,7 @@ export default function HomePage() {
       lastModified: issueImage.lastModified,
       exists: !!issueImage
     });
-    
+
     const id = generateUUID();
     const url = `/report/${id}` // Just the path, domain handled in SocialShare;
 
@@ -154,15 +154,15 @@ export default function HomePage() {
     const topLeaders = selectedLeaders
       .filter((key) => key !== "modi") // exclude Modi from top, always at bottom
       .map((key) => {
-  if (key === "cm") return { url: cmImage, name: selectedCMName || "Hon' Selected State/UT CM" };
-  if (key === "custom") return { url: customImage, name: customName || "Hon' Selected Leader" };
+        if (key === "cm") return { url: cmImage, name: selectedCMName || "Hon' Selected State/UT CM" };
+        if (key === "custom") return { url: customImage, name: customName || "Hon' Selected Leader" };
         const found = LEADER_OPTIONS.find((opt) => opt.key === key);
         return found ? { url: found.imageUrl, name: found.label } : null;
       })
       .filter((leader): leader is { url: string; name: string } => Boolean(leader));
 
     // Conditionally include Modi at bottom left
-    const modiImage = includeModiPhoto 
+    const modiImage = includeModiPhoto
       ? (LEADER_OPTIONS.find((opt) => opt.key === "modi")?.imageUrl || "/images/pm-modi.png")
       : "/images/leader-default.png"; // Use placeholder if Modi photo is disabled
 
@@ -209,23 +209,38 @@ export default function HomePage() {
       if (result.success) {
         console.log('Report stored successfully:', result)
       } else {
-        console.error('Failed to store report:', result.error)
+        console.warn('GitHub storage skipped (optional):', result.error)
       }
     } catch (error) {
-      console.error('Error storing report:', error)
-      // Don't fail the certificate generation if storage fails
+      console.warn('GitHub storage skipped (optional feature):', error)
+      // Completely swallow the error so it doesn't show up as a "runtime error" to the user
+      // This is optional storage, not critical path
     }
   }
 
   // Capture the canvas image once drawn
-  const handleCanvasRendered = (dataUrl: string | null) => {
+  const handleCanvasRendered = async (dataUrl: string | null) => {
     if (!dataUrl || !certData) return
     setGeneratedUrl(dataUrl)
+    setGeneratedUrl(dataUrl)
     // persist a copy to localStorage for simple "admin/report" usage
-    saveReport({
-      ...certData,
-      imageDataUrl: dataUrl,
-    })
+    try {
+      saveReport({
+        ...certData,
+        imageDataUrl: dataUrl,
+      })
+    } catch (e) {
+      console.warn("Local storage full, skipping saveReport", e)
+    }
+
+    // Send email with certificate
+    try {
+      const { sendCertificateEmailAction } = await import('@/app/actions/email')
+      await sendCertificateEmailAction(dataUrl, certData.issueType, certData.capturedAt, certData.locationText)
+      console.log('Certificate email sent successfully')
+    } catch (error) {
+      console.error('Failed to send certificate email:', error)
+    }
   }
 
   return (
@@ -450,8 +465,8 @@ export default function HomePage() {
                     />
                     <span className="text-sm">{opt.label}</span>
                     <div className="flex flex-col items-center ml-2">
-                      <img 
-                        src={opt.imageUrl} 
+                      <img
+                        src={opt.imageUrl}
                         alt={opt.label}
                         className="h-8 w-8 rounded-full object-cover border"
                       />
@@ -464,7 +479,7 @@ export default function HomePage() {
               </div>
             </div>
 
-              {selectedLeaders.includes("cm") && (
+            {selectedLeaders.includes("cm") && (
               <div className="space-y-2">
                 <Label className="text-sm">Select State/UT CM Photo</Label>
                 <LeaderPhotoInput
@@ -486,7 +501,7 @@ export default function HomePage() {
                 )}
               </div>
             )}
-            
+
             {/* Modi Photo Control */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
@@ -508,8 +523,8 @@ export default function HomePage() {
             <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-xs text-amber-800 font-medium mb-1">⚠️ IMPORTANT DISCLAIMER</p>
               <p className="text-xs text-amber-700">
-                This is <strong>NOT an official government document</strong>. This is a citizen-generated report for civic awareness purposes only. 
-                The use of leader photos does not imply official endorsement or government affiliation. 
+                This is <strong>NOT an official government document</strong>. This is a citizen-generated report for civic awareness purposes only.
+                The use of leader photos does not imply official endorsement or government affiliation.
                 No official action is guaranteed from this report.
               </p>
             </div>
@@ -620,10 +635,10 @@ export default function HomePage() {
                   — demo only, no backend yet.
                 </p>
               )}
-              
+
               {/* Email and RTI Options */}
               {certData && (
-                <EmailRTIOptions 
+                <EmailRTIOptions
                   issueType={certData.issueType}
                   location={certData.locationText}
                 />
@@ -642,11 +657,11 @@ export default function HomePage() {
       <footer className="mt-12 py-6 text-center text-gray-600 border-t">
         <div className="mb-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
           <p className="mb-2">
-            <strong>Legal Notice:</strong> This platform is for civic infrastructure reporting only. 
+            <strong>Legal Notice:</strong> This platform is for civic infrastructure reporting only.
             Users are responsible for their content. We do not verify reports or endorse claims.
           </p>
           <p>
-            <a href="/terms" className="text-blue-600 hover:underline">Terms of Service</a> • 
+            <a href="/terms" className="text-blue-600 hover:underline">Terms of Service</a> •
             Platform operated under IT Act 2000, Section 79
           </p>
         </div>

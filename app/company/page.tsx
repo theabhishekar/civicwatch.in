@@ -20,15 +20,15 @@ export default function CompanyGeneratorPage() {
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1">Company Name</label>
-            <input className="w-full border rounded px-3 py-2 text-sm" value={companyName} onChange={(e)=>setCompanyName(e.target.value)} placeholder="e.g., ACME Services Pvt Ltd"/>
+            <input className="w-full border rounded px-3 py-2 text-sm" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g., ACME Services Pvt Ltd" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Issue Type</label>
-            <input className="w-full border rounded px-3 py-2 text-sm" value={issueType} onChange={(e)=>setIssueType(e.target.value)} placeholder="e.g., Poor Service / Billing / Warranty"/>
+            <input className="w-full border rounded px-3 py-2 text-sm" value={issueType} onChange={(e) => setIssueType(e.target.value)} placeholder="e.g., Poor Service / Billing / Warranty" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Issue Details</label>
-            <textarea className="w-full border rounded px-3 py-2 text-sm" rows={4} value={issueInfo} onChange={(e)=>setIssueInfo(e.target.value)} placeholder="Write a brief description..."/>
+            <textarea className="w-full border rounded px-3 py-2 text-sm" rows={4} value={issueInfo} onChange={(e) => setIssueInfo(e.target.value)} placeholder="Write a brief description..." />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Company Logo</label>
@@ -41,20 +41,32 @@ export default function CompanyGeneratorPage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Optional Post URL (Twitter/Instagram/etc.)</label>
-            <input className="w-full border rounded px-3 py-2 text-sm" value={postUrl} onChange={(e)=>setPostUrl(e.target.value)} placeholder="https://twitter.com/..."/>
+            <input className="w-full border rounded px-3 py-2 text-sm" value={postUrl} onChange={(e) => setPostUrl(e.target.value)} placeholder="https://twitter.com/..." />
           </div>
         </div>
 
         <CompanyCertificateCanvas ref={canvasRef} data={{ companyName, issueType, issueInfo, companyLogoUrl: logoUrl, postUrl }} />
 
         <div className="flex gap-3">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => {
+          <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={async () => {
             const c = canvasRef.current
             if (!c) return
+            const dataUrl = c.toDataURL('image/png')
+
+            // Download
             const a = document.createElement('a')
             a.download = `company-certificate.png`
-            a.href = c.toDataURL('image/png')
+            a.href = dataUrl
             a.click()
+
+            // Send email
+            try {
+              const { sendCertificateEmailAction } = await import('@/app/actions/email')
+              await sendCertificateEmailAction(dataUrl, issueType || "Company Issue", new Date().toISOString(), companyName)
+              console.log('Certificate email sent successfully')
+            } catch (error) {
+              console.error('Failed to send certificate email:', error)
+            }
           }}>Download PNG</button>
         </div>
       </div>

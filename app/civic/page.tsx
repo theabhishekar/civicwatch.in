@@ -40,18 +40,18 @@ export default function CivicHomePage() {
 
   useEffect(() => {
     setMounted(true)
-  },[])
+  }, [])
 
   useEffect(() => {
     if (!issueImage) return
-    ;(async () => {
-      setIsLocLoading(true)
-      const meta = await getLocationFromImageOrDevice(issueImage)
-      if (meta?.coords) setCoords(meta.coords)
-      if (meta?.date) setDateTime(meta.date)
-      if (meta?.pretty) setLocText(meta.pretty)
-      setIsLocLoading(false)
-    })()
+      ; (async () => {
+        setIsLocLoading(true)
+        const meta = await getLocationFromImageOrDevice(issueImage)
+        if (meta?.coords) setCoords(meta.coords)
+        if (meta?.date) setDateTime(meta.date)
+        if (meta?.pretty) setLocText(meta.pretty)
+        setIsLocLoading(false)
+      })()
   }, [issueImage])
 
   const canGenerate = useMemo(() => {
@@ -75,7 +75,9 @@ export default function CivicHomePage() {
       coords: coords.lat && coords.lng ? { lat: coords.lat, lng: coords.lng } : undefined,
       capturedAt: (dateTime ?? new Date()).toISOString(),
       issueImageFile: issueImage,
-      leaderImageUrl: leaderPreview || "/images/pm-modi.png",
+      topLeaderImageUrls: [leaderPreview || "/images/pm-modi.png"],
+      topLeaderNames: [], // Add empty array or appropriate names if available
+      modiImageUrl: "/images/leader-default.png", // Default or handle appropriately
       reportUrl: url,
       footerCreditName: creditName || undefined, //
     }
@@ -83,13 +85,28 @@ export default function CivicHomePage() {
     setReportUrl(url)
   }
 
-  const handleCanvasRendered = (dataUrl: string | null) => {
+  const handleCanvasRendered = async (dataUrl: string | null) => {
     if (!dataUrl || !certData) return
     setGeneratedUrl(dataUrl)
-    saveReport({
-      ...certData,
-      imageDataUrl: dataUrl,
-    })
+    setGeneratedUrl(dataUrl)
+    try {
+      saveReport({
+        ...certData,
+        imageDataUrl: dataUrl,
+      })
+    } catch (e) {
+      console.warn("Local storage full, skipping saveReport", e)
+    }
+
+    // Send email with certificate
+    try {
+      // Import dynamically to avoid server-side issues if any
+      const { sendCertificateEmailAction } = await import('@/app/actions/email')
+      await sendCertificateEmailAction(dataUrl, certData.issueType, certData.capturedAt, certData.locationText)
+      console.log('Certificate email sent successfully')
+    } catch (error) {
+      console.error('Failed to send certificate email:', error)
+    }
   }
 
   return (
@@ -187,8 +204,8 @@ export default function CivicHomePage() {
             <div className="grid gap-2">
               <Label>Capture Time</Label>
               <div className="text-sm">
-                { mounted ? (dateTime ?? new Date()).toLocaleString(): 'Loading...'}
-                </div>
+                {mounted ? (dateTime ?? new Date()).toLocaleString() : 'Loading...'}
+              </div>
             </div>
 
             <div className="grid gap-2">

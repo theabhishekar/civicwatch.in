@@ -42,7 +42,7 @@ export class GitHubStorageService {
    */
   private reportToIssue(report: CivicReport): GitHubIssueData {
     const title = `${report.issueType} Report - ${report.locationText.split(',')[0]}` // First part of location
-    
+
     const body = [
       `**Issue Type:** ${report.issueType}`,
       `**Location:** ${report.locationText}`,
@@ -92,14 +92,14 @@ export class GitHubStorageService {
       }
 
       const result = await response.json()
-      
+
       return {
         success: result.success,
         issueNumber: result.issueNumber,
         error: undefined
       }
     } catch (error) {
-      console.error('Error storing report:', error)
+      console.warn('GitHub storage failed (optional):', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -116,11 +116,11 @@ export class GitHubStorageService {
       const response = await fetch(
         `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/analytics/summary.json`
       )
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch analytics: ${response.status}`)
       }
-      
+
       return await response.json()
     } catch (error) {
       console.error('Error fetching analytics:', error)
@@ -136,11 +136,11 @@ export class GitHubStorageService {
       const response = await fetch(
         `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/analytics/recent-activity.json`
       )
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch recent reports: ${response.status}`)
       }
-      
+
       const data = await response.json()
       return data.slice(0, limit)
     } catch (error) {
@@ -157,11 +157,11 @@ export class GitHubStorageService {
       const response = await fetch(
         `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/analytics/issue-types.json`
       )
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch issue type stats: ${response.status}`)
       }
-      
+
       return await response.json()
     } catch (error) {
       console.error('Error fetching issue type stats:', error)
@@ -177,11 +177,11 @@ export class GitHubStorageService {
       const response = await fetch(
         `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/analytics/locations.json`
       )
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch location stats: ${response.status}`)
       }
-      
+
       return await response.json()
     } catch (error) {
       console.error('Error fetching location stats:', error)
@@ -197,11 +197,11 @@ export class GitHubStorageService {
       const response = await fetch(
         `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/analytics/daily-activity.json`
       )
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch daily activity: ${response.status}`)
       }
-      
+
       return await response.json()
     } catch (error) {
       console.error('Error fetching daily activity:', error)
