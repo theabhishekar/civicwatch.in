@@ -1,20 +1,20 @@
 # 📊 Civic Issues Analytics Summary
 
-**Generated:** 15/4/2026, 7:45:06 am
+**Generated:** 15/4/2026, 1:23:45 pm
 
 ## 📈 Overview
-- **Total Reports:** 159
-- **Open Issues:** 159
+- **Total Reports:** 100
+- **Open Issues:** 100
 - **Resolved Issues:** 0
 
 ## 🏆 Top Issue Types
-1. **Pothole** - 1 reports
+
 
 ## 📍 Top Locations
-1. **Greater Noida, Uttar Pradesh** - 1 reports
+
 
 ## 👥 Top Contributors
-1. **ScienceArtist** - 159 reports
+1. **ScienceArtist** - 100 reports
 
 ## 📅 Recent Activity
 - **undefined** in undefined (2/10/2025)
